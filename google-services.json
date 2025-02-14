@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "875505369912",
+    "project_id": "rbproj-b05f2",
+    "storage_bucket": "rbproj-b05f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875505369912:android:fb27e9f428826bce2677cd",
+        "android_client_info": {
+          "package_name": "com.personal.rb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAZrLQnRYiR2yOOK8FjCiNR4K5_S7bmPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
