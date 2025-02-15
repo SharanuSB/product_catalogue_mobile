@@ -1,45 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Image, Dimensions, Pressable } from 'react-native';
-import { Text, Surface, IconButton, ActivityIndicator } from 'react-native-paper';
+import React from 'react';
+import { StyleSheet, View, ScrollView, Image, Dimensions } from 'react-native';
+import { Text, IconButton, Surface } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { Colors } from '@/theme/colors';
 import { formatPrice } from '@/utils/formatPrice';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
-const CategoryChip = ({ label }: { label: string }) => (
-  <View style={styles.categoryChip}>
-    <Text style={styles.categoryText}>{label}</Text>
-  </View>
-);
-
 export default function ProductDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [loading, setLoading] = useState(true);
   const product = useSelector((state: RootState) => 
     state.products.items.find(item => item.id === Number(id))
   );
 
-  useEffect(() => {
-    if (product) {
-      setLoading(false);
-    }
-  }, [product]);
-
-  if (loading || !product) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  if (!product) return null;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <IconButton
             icon="arrow-left"
@@ -49,54 +31,45 @@ export default function ProductDetails() {
           />
         </View>
 
-        <Image 
-          source={{ uri: product.image }} 
-          style={styles.image}
-          resizeMode="contain"
-        />
+        <Animated.View 
+          entering={FadeIn}
+          style={styles.content}
+        >
+          <Surface style={styles.imageContainer}>
+            <Image 
+              source={{ uri: product.image }} 
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </Surface>
 
-        <View style={styles.content}>
-          <Text variant="headlineSmall" style={styles.title}>
-            {product.title}
-          </Text>
+          <View style={styles.details}>
+            <View style={styles.categoryChip}>
+              <Text style={styles.categoryText}>{product.category}</Text>
+            </View>
 
-          <View style={styles.priceRow}>
-            <Text variant="headlineMedium" style={styles.price}>
+            <Text style={styles.title}>
+              {product.title}
+            </Text>
+
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingText}>
+                ⭐️ {product.rating.rate} ({product.rating.count} reviews)
+              </Text>
+            </View>
+
+            <Text style={styles.price}>
               {formatPrice(product.price)}
             </Text>
-            <CategoryChip label={product.category} />
-          </View>
 
-          <View style={styles.cardContainer}>
-            <Surface style={styles.ratingCard}>
-              <View style={styles.ratingInner}>
-                <View style={styles.ratingContent}>
-                  <View>
-                    <Text variant="titleMedium" style={styles.ratingLabel}>Rating</Text>
-                    <Text variant="displaySmall" style={styles.ratingNumber}>
-                      {product.rating.rate}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text variant="titleMedium" style={styles.ratingLabel}>Reviews</Text>
-                    <Text variant="displaySmall" style={styles.reviewCount}>
-                      {product.rating.count}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Surface>
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.descriptionTitle}>About this item</Text>
+              <Text style={styles.description}>
+                {product.description}
+              </Text>
+            </View>
           </View>
-
-          <View style={styles.descriptionContainer}>
-            <Text variant="titleLarge" style={styles.descriptionTitle}>
-              Description
-            </Text>
-            <Text variant="bodyLarge" style={styles.description}>
-              {product.description}
-            </Text>
-          </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -107,11 +80,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   header: {
     position: 'absolute',
     top: 0,
@@ -119,89 +87,82 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1,
     paddingHorizontal: 8,
+    paddingTop: 8,
   },
   backButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  },
-  image: {
-    width: width,
-    height: width,
-    backgroundColor: Colors.surface,
-  },
-  content: {
-    padding: 16,
-  },
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: Colors.onSurface,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  price: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: Colors.chip,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.primary,
-  },
-  cardContainer: {
-    marginBottom: 24,
-    borderRadius: 12,
-  },
-  ratingCard: {
     elevation: 2,
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    shadowColor: Colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  ratingInner: {
-    borderRadius: 12,
-    overflow: 'hidden',
+  content: {
+    flex: 1,
   },
-  ratingContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
+  imageContainer: {
+    width: width,
+    height: width,
+    backgroundColor: Colors.surface,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  ratingLabel: {
-    color: Colors.secondaryText,
-    marginBottom: 4,
+  image: {
+    width: '100%',
+    height: '100%',
   },
-  ratingNumber: {
+  details: {
+    padding: 20,
+  },
+  categoryChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: Colors.primary + '10',
+    marginBottom: 12,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: Colors.primary,
+  },
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-  },
-  reviewCount: {
     color: Colors.onSurface,
+    marginBottom: 12,
+    lineHeight: 32,
   },
-  descriptionContainer: {
+  ratingContainer: {
+    marginBottom: 16,
+  },
+  ratingText: {
+    fontSize: 16,
+    color: Colors.secondaryText,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.primary,
     marginBottom: 24,
   },
+  descriptionContainer: {
+    backgroundColor: Colors.surface,
+    padding: 16,
+    borderRadius: 12,
+  },
   descriptionTitle: {
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '600',
     color: Colors.onSurface,
+    marginBottom: 8,
   },
   description: {
+    fontSize: 16,
     lineHeight: 24,
     color: Colors.secondaryText,
   },

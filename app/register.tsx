@@ -1,14 +1,20 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, TextInput, useTheme, Provider as PaperProvider } from 'react-native-paper';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { authStorage } from '@/utils/authStorage';
-import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
+import { FormInput } from '@/components/ui/FormInput';
+import { FormButton } from '@/components/ui/FormButton';
 import Toast from 'react-native-toast-message';
+import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
 import { manageUserSession, setupSessionMonitor } from '@/utils/sessionService';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function Register() {
+  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -85,202 +91,125 @@ export default function Register() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Sign up to get started</Text>
+    <PaperProvider>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Animated.View 
+            entering={FadeInDown.duration(1000).springify()} 
+            style={styles.header}
+          >
+            <Text 
+              variant="headlineLarge" 
+              style={styles.title}
+            >
+              Create Account
+            </Text>
+            <Text 
+              variant="bodyLarge" 
+              style={styles.subtitle}
+            >
+              Sign up to get started
+            </Text>
+          </Animated.View>
 
-          <View style={styles.inputGroup}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!isLoading}
-            />
-          </View>
+          <Animated.View 
+            entering={FadeInUp.duration(1000).springify()}
+            style={styles.formContainer}
+          >
+            <View style={styles.form}>
+              <FormInput
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                disabled={isLoading}
+              />
 
-          <View style={styles.inputGroup}>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Password"
+              <FormInput
+                label="Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword.password}
-                editable={!isLoading}
+                disabled={isLoading}
+                right={
+                  <TextInput.Icon
+                    icon={showPassword.password ? 'eye-off' : 'eye'}
+                    onPress={() => setShowPassword(prev => ({ ...prev, password: !prev.password }))}
+                  />
+                }
               />
-              <TouchableOpacity 
-                style={styles.visibilityToggle}
-                onPress={() => setShowPassword(prev => ({ ...prev, password: !prev.password }))}
-              >
-                <Text style={styles.toggleText}>
-                  {showPassword.password ? 'Hide' : 'Show'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
 
-          <View style={styles.inputGroup}>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Confirm Password"
+              <FormInput
+                label="Confirm Password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword.confirmPassword}
-                editable={!isLoading}
+                disabled={isLoading}
+                right={
+                  <TextInput.Icon
+                    icon={showPassword.confirmPassword ? 'eye-off' : 'eye'}
+                    onPress={() => setShowPassword(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                  />
+                }
               />
-              <TouchableOpacity 
-                style={styles.visibilityToggle}
-                onPress={() => setShowPassword(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
-              >
-                <Text style={styles.toggleText}>
-                  {showPassword.confirmPassword ? 'Hide' : 'Show'}
-                </Text>
-              </TouchableOpacity>
+
+              <View style={styles.buttonContainer}>
+                <FormButton
+                  onPress={handleRegister}
+                  loading={isLoading}
+                  disabled={isLoading}
+                >
+                  Register
+                </FormButton>
+
+                <FormButton
+                  mode="text"
+                  onPress={() => router.back()}
+                  disabled={isLoading}
+                >
+                  Already have an account? Login
+                </FormButton>
+              </View>
             </View>
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>REGISTER</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.loginContainer}
-            onPress={() => router.back()}
-            disabled={isLoading}
-          >
-            <Text style={styles.linkText}>Already have an account? </Text>
-            <Text style={styles.link}>Login</Text>
-          </TouchableOpacity>
+          </Animated.View>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </PaperProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
-  keyboardView: {
+  content: {
     flex: 1,
+    padding: 24,
   },
-  formContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
+  header: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 8,
     color: '#333',
-    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 30,
-    textAlign: 'center',
   },
-  inputGroup: {
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    fontSize: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  passwordInput: {
+  formContainer: {
     flex: 1,
-    padding: 15,
-    fontSize: 16,
   },
-  visibilityToggle: {
-    padding: 15,
+  form: {
+    gap: 16,
   },
-  toggleText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    minHeight: 50,
-    justifyContent: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#007AFF80',
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  linkText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  link: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+  buttonContainer: {
+    marginTop: 24,
+    gap: 8,
+  }
 });

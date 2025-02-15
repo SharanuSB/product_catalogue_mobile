@@ -1,39 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, RefreshControl, Dimensions, ScrollView } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { StyleSheet, View, RefreshControl, Dimensions, ScrollView } from 'react-native';
 import { ActivityIndicator, Text, Searchbar, Chip, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import debounce from 'lodash/debounce';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { fetchProducts, fetchCategories } from '@/store/productsSlice';
 import type { RootState, AppDispatch } from '@/store';
 import { Colors } from '@/theme/colors';
+import Animated, { 
+  FadeInDown, 
+  FadeOut,
+  Layout,
+  SlideInRight
+} from 'react-native-reanimated';
 
+// Constants for layout calculations
 const { width } = Dimensions.get('window');
 const COLUMN_GAP = 12;
 const NUM_COLUMNS = 2;
 const ITEM_WIDTH = (width - (COLUMN_GAP * (NUM_COLUMNS + 1))) / NUM_COLUMNS;
-const ITEMS_PER_PAGE = 10;
+const DEBOUNCE_DELAY = 300; 
+const ITEMS_PER_PAGE = 10; 
+
+const AnimatedProductCard = Animated.createAnimatedComponent(View);
 
 export default function HomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading, error, categories } = useSelector((state: RootState) => state.products);
+  
+  // Local state management
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchProducts());
-    dispatch(fetchCategories());
-  }, []);
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchQuery(text);
+      }, DEBOUNCE_DELAY),
+    []
+  );
 
+  // Cleanup debounce on unmount
   useEffect(() => {
-    // Reset pagination when search or category changes
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
-  const handleRefresh = async () => {
+  // Initial data fetch
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchInitialData = async () => {
+      if (mounted) {
+        await Promise.all([
+          dispatch(fetchProducts()),
+          dispatch(fetchCategories())
+        ]);
+      }
+    };
+
+    fetchInitialData();
+    return () => { mounted = false; };
+  }, [dispatch]);
+
+  // Memoized filtered items based on search and category
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchesSearch = 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = !selectedCategory || item.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, searchQuery, selectedCategory]);
+
+  // Get paginated items based on page size
+  const paginatedItems = useMemo(() => {
+    return filteredItems.slice(0, currentPage * ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage, ITEMS_PER_PAGE]);
+
+  const hasMore = paginatedItems.length < filteredItems.length;
+
+  // Handler for pull-to-refresh
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
     await Promise.all([
@@ -41,18 +95,22 @@ export default function HomeScreen() {
       dispatch(fetchCategories())
     ]);
     setRefreshing(false);
-  };
+  }, [dispatch]);
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const paginatedItems = filteredItems.slice(0, currentPage * ITEMS_PER_PAGE);
-  const hasMore = paginatedItems.length < filteredItems.length;
+  // Memoized render item function for FlatList
+  const renderItem = useCallback(({ item, index }: { item: any; index: number }) => (
+    <AnimatedProductCard 
+      entering={FadeInDown.delay(index * 100).springify()}
+      exiting={FadeOut}
+      layout={Layout.springify()}
+      style={[
+        styles.itemContainer,
+        index % 2 === 0 ? { marginRight: COLUMN_GAP/2 } : { marginLeft: COLUMN_GAP/2 }
+      ]}
+    >
+      <ProductCard {...item} />
+    </AnimatedProductCard>
+  ), []);
 
   const handleLoadMore = () => {
     if (loadingMore || !hasMore) return;
@@ -77,15 +135,7 @@ export default function HomeScreen() {
     );
   };
 
-  const renderItem = ({ item, index }: { item: any; index: number }) => (
-    <View style={[
-      styles.itemContainer,
-      index % 2 === 0 ? { marginRight: COLUMN_GAP/2 } : { marginLeft: COLUMN_GAP/2 }
-    ]}>
-      <ProductCard {...item} />
-    </View>
-  );
-
+  // Error state handling
   if (error) {
     return (
       <View style={styles.centered}>
@@ -96,15 +146,20 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <Animated.View 
+        entering={SlideInRight.springify()}
+        style={styles.header}
+      >
         <Searchbar
           placeholder="Search products..."
-          onChangeText={setSearchQuery}
+          onChangeText={debouncedSearch}
           value={searchQuery}
           style={styles.searchBar}
           inputStyle={styles.searchInput}
           iconColor={Colors.primary}
         />
+        
+        {/* Category Filter */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -142,9 +197,11 @@ export default function HomeScreen() {
             </Chip>
           ))}
         </ScrollView>
-      </View>
+      </Animated.View>
 
-      <FlatList
+      {/* Product Grid */}
+      <Animated.FlatList
+        entering={FadeInDown}
         data={paginatedItems}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
@@ -157,15 +214,24 @@ export default function HomeScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           !loading ? (
-            <Text style={styles.noResults}>No products found</Text>
+            <Animated.Text 
+              entering={FadeInDown}
+              style={styles.noResults}
+            >
+              No products found
+            </Animated.Text>
           ) : null
         }
       />
 
+      {/* Loading Indicator */}
       {loading && !refreshing && (
-        <View style={styles.loadingContainer}>
+        <Animated.View 
+          entering={FadeInDown}
+          style={styles.loadingContainer}
+        >
           <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        </Animated.View>
       )}
     </SafeAreaView>
   );

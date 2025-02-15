@@ -11,12 +11,13 @@ import { FormButton } from '@/components/ui/FormButton';
 import Toast from 'react-native-toast-message';
 import { Colors } from '@/theme/colors';
 import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
-import { manageUserSession, setupSessionMonitor, cleanupSession } from '@/utils/sessionService';
+import {cleanupSession } from '@/utils/sessionService';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function Login() {
   const theme = useTheme();
-  const [email, setEmail] = useState('sharanusb12345@gmail.com');
-  const [password, setPassword] = useState('Sharanu@1032');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,9 +38,6 @@ export default function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       await authStorage.storeToken(token);
-      
-      // await manageUserSession(userCredential.user.uid);
-      // setupSessionMonitor(userCredential.user.uid);
 
       Toast.show({
         type: 'success',
@@ -72,7 +70,10 @@ export default function Login() {
     <PaperProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.content}>
-          <View style={styles.header}>
+          <Animated.View 
+            entering={FadeInDown.duration(1000).springify()} 
+            style={styles.header}
+          >
             <Text 
               variant="headlineLarge" 
               style={[styles.title, { color: theme.colors.onSurface }]}
@@ -85,9 +86,12 @@ export default function Login() {
             >
               Login to continue
             </Text>
-          </View>
+          </Animated.View>
 
-          <View style={styles.form}>
+          <Animated.View 
+            entering={FadeInUp.duration(1000).springify()}
+            style={styles.form}
+          >
             <FormInput
               label="Email"
               value={email}
@@ -125,7 +129,7 @@ export default function Login() {
             >
               Don't have an account? Register
             </FormButton>
-          </View>
+          </Animated.View>
         </View>
       </SafeAreaView>
     </PaperProvider>
