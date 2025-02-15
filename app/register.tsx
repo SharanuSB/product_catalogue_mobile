@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { authStorage } from '@/utils/authStorage';
+import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
+import Toast from 'react-native-toast-message';
+import { manageUserSession, setupSessionMonitor } from '@/utils/sessionService';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -17,12 +20,35 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
-      alert('Please fill in all fields');
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Information',
+        text2: 'Please fill in all fields',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      Toast.show({
+        type: 'error',
+        text1: 'Password Mismatch',
+        text2: 'Passwords do not match',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      Toast.show({
+        type: 'error',
+        text1: 'Weak Password',
+        text2: 'Password should be at least 6 characters',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -31,10 +57,28 @@ export default function Register() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       await authStorage.storeToken(token);
+      
+      // Add session management
+      await manageUserSession(userCredential.user.uid);
+      setupSessionMonitor(userCredential.user.uid);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Welcome!',
+        text2: 'Account created successfully',
+        position: 'top',
+        visibilityTime: 2000,
+      });
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      console.error(error);
-      alert(error.message || 'Registration failed');
+      console.error('Registration error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Registration Failed',
+        text2: getAuthErrorMessage(error),
+        position: 'top',
+        visibilityTime: 4000,
+      });
     } finally {
       setIsLoading(false);
     }

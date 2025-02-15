@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, Image, Pressable } from 'react-native';
-import { Text, Card, Chip } from 'react-native-paper';
+import { Text, Surface } from 'react-native-paper';
 import { router } from 'expo-router';
+import { Colors } from '@/theme/colors';
+import { formatPrice } from '@/utils/formatPrice';
 
 interface ProductCardProps {
   id: number;
@@ -10,7 +12,6 @@ interface ProductCardProps {
   description: string;
   price: number;
   category: string;
-  onPress: () => void;
 }
 
 export const ProductCard = ({ 
@@ -19,58 +20,108 @@ export const ProductCard = ({
   image, 
   description, 
   price, 
-  category, 
-  onPress 
+  category,
 }: ProductCardProps) => {
   return (
-    <Pressable onPress={() => router.push(`/product/${id}`)}>
-      <Card style={styles.card}>
-        <Image source={{ uri: image }} style={styles.image} />
-        <Card.Content>
-          <Text variant="titleMedium" numberOfLines={1} style={styles.title}>
+    <Pressable 
+      onPress={() => router.push(`/product/${id}`)}
+      style={({ pressed }) => [
+        styles.pressable,
+        { opacity: pressed ? 0.9 : 1 }
+      ]}
+    >
+      <Surface style={styles.surface}>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: image }} 
+            style={styles.image}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={styles.content}>
+          <Text 
+            variant="titleMedium" 
+            numberOfLines={1} 
+            style={styles.title}
+          >
             {title}
           </Text>
-          <Text variant="bodySmall" numberOfLines={2} style={styles.description}>
+          <Text 
+            variant="bodySmall" 
+            numberOfLines={2} 
+            style={styles.description}
+          >
             {description}
           </Text>
           <View style={styles.footer}>
-            <Chip mode="outlined">{category}</Chip>
+            <View style={styles.categoryChip}>
+              <Text style={styles.categoryText}>
+                {category}
+              </Text>
+            </View>
             <Text variant="titleMedium" style={styles.price}>
-              ${price}
+              {formatPrice(price)}
             </Text>
           </View>
-        </Card.Content>
-      </Card>
+        </View>
+      </Surface>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    elevation: 4,
+  pressable: {
+    margin: 8,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  surface: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: Colors.card,
+  },
+  imageContainer: {
+    aspectRatio: 1,
+    backgroundColor: Colors.surface,
   },
   image: {
-    height: 200,
-    resizeMode: 'cover',
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    padding: 12,
   },
   title: {
-    marginTop: 8,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginBottom: 4,
+    color: Colors.onSurface,
   },
   description: {
-    marginTop: 4,
-    color: '#666',
+    marginBottom: 8,
+    color: Colors.secondaryText,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: Colors.chip,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.primary,
   },
   price: {
-    color: '#007AFF',
     fontWeight: 'bold',
+    color: Colors.primary,
   },
 }); 

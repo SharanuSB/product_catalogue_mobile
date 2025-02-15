@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { Searchbar, Chip } from 'react-native-paper';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { Searchbar, Surface, Text } from 'react-native-paper';
+import { useAppTheme } from '@/theme/ThemeContext';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -10,6 +11,39 @@ interface SearchHeaderProps {
   onCategorySelect: (category: string) => void;
 }
 
+const CustomChip = ({ 
+  label, 
+  selected, 
+  onPress,
+  theme 
+}: { 
+  label: string; 
+  selected: boolean; 
+  onPress: () => void;
+  theme: any;
+}) => (
+  <Pressable onPress={onPress}>
+    <Surface
+      style={[
+        styles.chip,
+        {
+          backgroundColor: selected ? theme.colors.primary : 'transparent',
+          borderColor: selected ? theme.colors.primary : theme.colors.border,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.chipText,
+          { color: selected ? '#fff' : theme.colors.text },
+        ]}
+      >
+        {label}
+      </Text>
+    </Surface>
+  </Pressable>
+);
+
 export const SearchHeader = ({
   searchQuery,
   onSearchChange,
@@ -17,37 +51,38 @@ export const SearchHeader = ({
   selectedCategory,
   onCategorySelect,
 }: SearchHeaderProps) => {
+  const { theme } = useAppTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Searchbar
         placeholder="Search products..."
         onChangeText={onSearchChange}
         value={searchQuery}
-        style={styles.searchBar}
+        style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}
+        iconColor={theme.colors.primary}
+        placeholderTextColor={theme.colors.secondaryText}
+        inputStyle={{ color: theme.colors.text }}
       />
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoriesContainer}
       >
-        <Chip
-          mode={selectedCategory === '' ? 'flat' : 'outlined'}
+        <CustomChip
+          label="All"
           selected={selectedCategory === ''}
           onPress={() => onCategorySelect('')}
-          style={styles.chip}
-        >
-          All
-        </Chip>
+          theme={theme}
+        />
         {categories.map((category) => (
-          <Chip
+          <CustomChip
             key={category}
-            mode={selectedCategory === category ? 'flat' : 'outlined'}
+            label={category}
             selected={selectedCategory === category}
             onPress={() => onCategorySelect(category)}
-            style={styles.chip}
-          >
-            {category}
-          </Chip>
+            theme={theme}
+          />
         ))}
       </ScrollView>
     </View>
@@ -57,17 +92,27 @@ export const SearchHeader = ({
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#fff',
   },
   searchBar: {
     elevation: 0,
-    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   categoriesContainer: {
     paddingVertical: 16,
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   chip: {
     marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    elevation: 0,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 }); 

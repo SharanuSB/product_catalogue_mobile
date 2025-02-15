@@ -17,7 +17,6 @@ export const authStorage = {
     async getToken() {
         try {
             const token = await SecureStore.getItemAsync(STORAGE_KEY);
-            console.log("Retrieved token:", token);
             return token;
         } catch (error) {
             console.error('Error getting token:', error);

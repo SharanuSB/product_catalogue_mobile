@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Image, Dimensions } from 'react-native';
-import { Text, Card, Chip, ActivityIndicator, IconButton } from 'react-native-paper';
+import { StyleSheet, View, ScrollView, Image, Dimensions, Pressable } from 'react-native';
+import { Text, Surface, IconButton, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
+import { Colors } from '@/theme/colors';
+import { formatPrice } from '@/utils/formatPrice';
 
 const { width } = Dimensions.get('window');
+
+const CategoryChip = ({ label }: { label: string }) => (
+  <View style={styles.categoryChip}>
+    <Text style={styles.categoryText}>{label}</Text>
+  </View>
+);
 
 export default function ProductDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,7 +32,7 @@ export default function ProductDetails() {
   if (loading || !product) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -54,29 +62,31 @@ export default function ProductDetails() {
 
           <View style={styles.priceRow}>
             <Text variant="headlineMedium" style={styles.price}>
-              ${product.price}
+              {formatPrice(product.price)}
             </Text>
-            <Chip mode="outlined" style={styles.category}>
-              {product.category}
-            </Chip>
+            <CategoryChip label={product.category} />
           </View>
 
-          <Card style={styles.ratingCard}>
-            <Card.Content style={styles.ratingContent}>
-              <View>
-                <Text variant="titleMedium">Rating</Text>
-                <Text variant="displaySmall" style={styles.ratingNumber}>
-                  {product.rating.rate}
-                </Text>
+          <View style={styles.cardContainer}>
+            <Surface style={styles.ratingCard}>
+              <View style={styles.ratingInner}>
+                <View style={styles.ratingContent}>
+                  <View>
+                    <Text variant="titleMedium" style={styles.ratingLabel}>Rating</Text>
+                    <Text variant="displaySmall" style={styles.ratingNumber}>
+                      {product.rating.rate}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text variant="titleMedium" style={styles.ratingLabel}>Reviews</Text>
+                    <Text variant="displaySmall" style={styles.reviewCount}>
+                      {product.rating.count}
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <View>
-                <Text variant="titleMedium">Reviews</Text>
-                <Text variant="displaySmall" style={styles.reviewCount}>
-                  {product.rating.count}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
+            </Surface>
+          </View>
 
           <View style={styles.descriptionContainer}>
             <Text variant="titleLarge" style={styles.descriptionTitle}>
@@ -95,7 +105,7 @@ export default function ProductDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -116,7 +126,7 @@ const styles = StyleSheet.create({
   image: {
     width: width,
     height: width,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.surface,
   },
   content: {
     padding: 16,
@@ -124,6 +134,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     marginBottom: 16,
+    color: Colors.onSurface,
   },
   priceRow: {
     flexDirection: 'row',
@@ -132,27 +143,55 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   price: {
-    color: '#007AFF',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
-  category: {
-    backgroundColor: 'transparent',
+  categoryChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: Colors.chip,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.primary,
+  },
+  cardContainer: {
+    marginBottom: 24,
+    borderRadius: 12,
   },
   ratingCard: {
-    marginBottom: 24,
     elevation: 2,
+    backgroundColor: Colors.card,
+    borderRadius: 12,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  ratingInner: {
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   ratingContent: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 8,
+    paddingVertical: 16,
+  },
+  ratingLabel: {
+    color: Colors.secondaryText,
+    marginBottom: 4,
   },
   ratingNumber: {
-    color: '#007AFF',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
   reviewCount: {
-    color: '#666',
+    color: Colors.onSurface,
   },
   descriptionContainer: {
     marginBottom: 24,
@@ -160,9 +199,10 @@ const styles = StyleSheet.create({
   descriptionTitle: {
     fontWeight: 'bold',
     marginBottom: 8,
+    color: Colors.onSurface,
   },
   description: {
     lineHeight: 24,
-    color: '#333',
+    color: Colors.secondaryText,
   },
 }); 
