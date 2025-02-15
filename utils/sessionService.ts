@@ -8,12 +8,15 @@ import uuid from 'react-native-uuid';
 import { Platform } from 'react-native';
 
 const SESSION_KEY = 'user_session_id';
+let unsubscribe: (() => void) | null = null;
 
 export const manageUserSession = async (userId: string) => {
     try {
+        // Generate new session and store locally
         const sessionId = uuid.v4().toString();
         await SecureStore.setItemAsync(SESSION_KEY, sessionId);
 
+        // Update Firestore with new session
         const sessionRef = doc(db, 'userSessions', userId);
         await setDoc(sessionRef, {
             sessionId,
@@ -22,7 +25,7 @@ export const manageUserSession = async (userId: string) => {
                 platform: Platform.OS,
                 version: Platform.Version,
             }
-        }, { merge: true });
+        }, { merge: false }); // Use merge: false to overwrite completely
 
         return sessionId;
     } catch (error) {
@@ -31,42 +34,29 @@ export const manageUserSession = async (userId: string) => {
     }
 };
 
-let unsubscribe: (() => void) | null = null;
-
 export const setupSessionMonitor = (userId: string) => {
-    // Clean up previous listener if exists
-    if (unsubscribe) {
-        unsubscribe();
-    }
+    cleanupSession(); // Clean up any existing listener
 
     try {
-        unsubscribe = onSnapshot(
-            doc(db, 'userSessions', userId),
-            {
-                next: async (snapshot) => {
-                    try {
-                        const currentSessionId = await SecureStore.getItemAsync(SESSION_KEY);
-                        const sessionData = snapshot.data();
+        const sessionRef = doc(db, 'userSessions', userId);
 
-                        if (sessionData && sessionData.sessionId !== currentSessionId) {
-                            await handleForceLogout();
-                        }
-                    } catch (error) {
-                        console.error('Session monitoring error:', error);
-                    }
-                },
-                error: (error) => {
-                    console.error('Session listener error:', error);
+        unsubscribe = onSnapshot(sessionRef, {
+            next: async (snapshot) => {
+                if (!snapshot.exists()) return;
+
+                const sessionData = snapshot.data();
+                const currentSessionId = await SecureStore.getItemAsync(SESSION_KEY);
+
+                if (!currentSessionId || sessionData.sessionId !== currentSessionId) {
+                    await handleForceLogout();
                 }
+            },
+            error: (error) => {
+                console.error('Session listener error:', error);
             }
-        );
+        });
 
-        return () => {
-            if (unsubscribe) {
-                unsubscribe();
-                unsubscribe = null;
-            }
-        };
+        return unsubscribe;
     } catch (error) {
         console.error('Setup session monitor error:', error);
         return () => { };
@@ -75,25 +65,44 @@ export const setupSessionMonitor = (userId: string) => {
 
 const handleForceLogout = async () => {
     try {
-        if (unsubscribe) {
-            unsubscribe();
-            unsubscribe = null;
-        }
+        cleanupSession();
 
-        await signOut(auth);
-        await SecureStore.deleteItemAsync(SESSION_KEY);
+        // Clear all local data
+        await Promise.all([
+            SecureStore.deleteItemAsync(SESSION_KEY),
+            signOut(auth)
+        ]);
 
+        // Show alert and navigate
         Alert.alert(
             'Session Expired',
             'You have been logged in from another device',
             [{
                 text: 'OK',
                 onPress: () => {
-                    router.replace('/login');
+                    setTimeout(() => {
+                        router.replace('/login');
+                    }, 100);
                 }
-            }]
+            }],
+            {
+                cancelable: false,
+                onDismiss: () => {
+                    setTimeout(() => {
+                        router.replace('/login');
+                    }, 100);
+                }
+            }
         );
     } catch (error) {
         console.error('Force logout error:', error);
+        router.replace('/login');
+    }
+};
+
+export const cleanupSession = () => {
+    if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
     }
 };

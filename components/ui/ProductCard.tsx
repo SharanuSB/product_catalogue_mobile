@@ -31,31 +31,29 @@ export const ProductCard = ({
       ]}
     >
       <Surface style={styles.surface}>
-        <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: image }} 
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </View>
+        <Image 
+          source={{ uri: image }} 
+          style={styles.image}
+          resizeMode="cover"
+        />
         <View style={styles.content}>
           <Text 
             variant="titleMedium" 
-            numberOfLines={1} 
             style={styles.title}
+            numberOfLines={1}
           >
             {title}
           </Text>
           <Text 
             variant="bodySmall" 
-            numberOfLines={2} 
             style={styles.description}
+            numberOfLines={2}
           >
             {description}
           </Text>
           <View style={styles.footer}>
             <View style={styles.categoryChip}>
-              <Text style={styles.categoryText}>
+              <Text style={styles.categoryText} numberOfLines={1}>
                 {category}
               </Text>
             </View>
@@ -71,28 +69,20 @@ export const ProductCard = ({
 
 const styles = StyleSheet.create({
   pressable: {
-    margin: 8,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    height: 280,
   },
   surface: {
+    flex: 1,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: Colors.card,
-  },
-  imageContainer: {
-    aspectRatio: 1,
-    backgroundColor: Colors.surface,
+    elevation: 2,
   },
   image: {
     width: '100%',
-    height: '100%',
+    height: 140,
   },
   content: {
+    flex: 1,
     padding: 12,
   },
   title: {
@@ -103,6 +93,7 @@ const styles = StyleSheet.create({
   description: {
     marginBottom: 8,
     color: Colors.secondaryText,
+    flex: 1,
   },
   footer: {
     flexDirection: 'row',
@@ -110,6 +101,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryChip: {
+    flex: 1,
+    marginRight: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

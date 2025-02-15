@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, IconButton, Provider as PaperProvider, TextInput, useTheme } from 'react-native-paper';
@@ -11,7 +11,7 @@ import { FormButton } from '@/components/ui/FormButton';
 import Toast from 'react-native-toast-message';
 import { Colors } from '@/theme/colors';
 import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
-import { manageUserSession, setupSessionMonitor } from '@/utils/sessionService';
+import { manageUserSession, setupSessionMonitor, cleanupSession } from '@/utils/sessionService';
 
 export default function Login() {
   const theme = useTheme();
@@ -38,8 +38,8 @@ export default function Login() {
       const token = await userCredential.user.getIdToken();
       await authStorage.storeToken(token);
       
-      await manageUserSession(userCredential.user.uid);
-      setupSessionMonitor(userCredential.user.uid);
+      // await manageUserSession(userCredential.user.uid);
+      // setupSessionMonitor(userCredential.user.uid);
 
       Toast.show({
         type: 'success',
@@ -61,6 +61,12 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+        cleanupSession();
+    };
+  }, []);
 
   return (
     <PaperProvider>
