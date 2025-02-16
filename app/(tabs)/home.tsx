@@ -36,13 +36,23 @@ export default function HomeScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Update search state immediately and debounce the filtering
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const debouncedSearch = useMemo(
     () =>
       debounce((text: string) => {
         setSearchQuery(text);
-      }, DEBOUNCE_DELAY),
+        setCurrentPage(1);
+      }, 500),
     []
   );
+
+  // Handle search input
+  const handleSearch = useCallback((text: string) => {
+    setSearchTerm(text); // Update UI immediately
+    debouncedSearch(text); // Debounce the actual filtering
+  }, [debouncedSearch]);
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -68,12 +78,16 @@ export default function HomeScreen() {
     return () => { mounted = false; };
   }, [dispatch]);
 
-  // Memoized filtered items based on search and category
+  // Memoized filtered items
   const filteredItems = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query && !selectedCategory) return items;
+    
     return items.filter(item => {
-      const matchesSearch = 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !query || 
+        item.title.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query);
       const matchesCategory = !selectedCategory || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -152,8 +166,8 @@ export default function HomeScreen() {
       >
         <Searchbar
           placeholder="Search products..."
-          onChangeText={debouncedSearch}
-          value={searchQuery}
+          onChangeText={handleSearch}
+          value={searchTerm}
           style={styles.searchBar}
           inputStyle={styles.searchInput}
           iconColor={Colors.primary}

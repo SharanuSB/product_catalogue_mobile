@@ -6,19 +6,11 @@ export const Colors: MD3Colors & {
     card: string;
     chip: string;
     shadow: string;
+    surfaceDisabled: string;
+    onSurfaceDisabled: string;
+    backdrop: string;
 } = {
     primary: '#007AFF',
-    background: '#FFFFFF',
-    surface: '#F8F8F8',
-    text: '#1A1A1A',
-    secondaryText: '#666666',
-    border: '#E0E0E0',
-    error: '#FF3B30',
-    success: '#34C759',
-    card: '#FFFFFF',
-    chip: '#F0F0F0',
-    shadow: '#000000',
-    // Add other required MD3Colors properties
     onPrimary: '#FFFFFF',
     primaryContainer: '#007AFF',
     onPrimaryContainer: '#FFFFFF',
@@ -30,8 +22,9 @@ export const Colors: MD3Colors & {
     onTertiary: '#FFFFFF',
     tertiaryContainer: '#666666',
     onTertiaryContainer: '#FFFFFF',
-    errorContainer: '#FF3B30',
+    error: '#FF3B30',
     onError: '#FFFFFF',
+    errorContainer: '#FF3B30',
     onErrorContainer: '#FFFFFF',
     background: '#FFFFFF',
     onBackground: '#1A1A1A',
@@ -45,6 +38,13 @@ export const Colors: MD3Colors & {
     inverseSurface: '#1A1A1A',
     inverseOnSurface: '#FFFFFF',
     inversePrimary: '#007AFF',
+    // Custom properties
+    secondaryText: '#666666',
+    border: '#E0E0E0',
+    card: '#FFFFFF',
+    chip: '#F0F0F0',
+    shadow: '#000000',
+    // Required by MD3Colors
     elevation: {
         level0: 'transparent',
         level1: '#FFFFFF',
@@ -52,5 +52,9 @@ export const Colors: MD3Colors & {
         level3: '#F0F0F0',
         level4: '#F0F0F0',
         level5: '#F0F0F0',
-    }
+    },
+    // Add these missing MD3Colors properties
+    surfaceDisabled: 'rgba(28, 27, 31, 0.12)',
+    onSurfaceDisabled: 'rgba(28, 27, 31, 0.38)',
+    backdrop: 'rgba(0, 0, 0, 0.5)',
 }; 

@@ -90,21 +90,6 @@ export function DrawerContent(props: any) {
           onPress={() => router.push('/(tabs)/home')}
           active={true}
         />
-        <DrawerItem
-          label="Profile"
-          icon="account"
-          onPress={() => {}}
-        />
-        <DrawerItem
-          label="Orders"
-          icon="shopping"
-          onPress={() => {}}
-        />
-        <DrawerItem
-          label="Settings"
-          icon="cog"
-          onPress={() => {}}
-        />
       </View>
 
       <Divider style={styles.divider} />

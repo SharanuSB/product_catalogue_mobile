@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, IconButton, Provider as PaperProvider, TextInput, useTheme } from 'react-native-paper';
+import { Text, Provider as PaperProvider, TextInput, useTheme } from 'react-native-paper';
 import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase';
@@ -11,7 +11,6 @@ import { FormButton } from '@/components/ui/FormButton';
 import Toast from 'react-native-toast-message';
 import { Colors } from '@/theme/colors';
 import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
-import {cleanupSession } from '@/utils/sessionService';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function Login() {
@@ -59,12 +58,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    return () => {
-        cleanupSession();
-    };
-  }, []);
 
   return (
     <PaperProvider>

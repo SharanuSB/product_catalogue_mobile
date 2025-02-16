@@ -10,7 +10,6 @@ import { FormInput } from '@/components/ui/FormInput';
 import { FormButton } from '@/components/ui/FormButton';
 import Toast from 'react-native-toast-message';
 import { getAuthErrorMessage } from '@/utils/getAuthErrorMessage';
-import { manageUserSession, setupSessionMonitor } from '@/utils/sessionService';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function Register() {
@@ -63,10 +62,6 @@ export default function Register() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       await authStorage.storeToken(token);
-      
-      // Add session management
-      await manageUserSession(userCredential.user.uid);
-      setupSessionMonitor(userCredential.user.uid);
 
       Toast.show({
         type: 'success',
